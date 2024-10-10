@@ -1,7 +1,9 @@
 import {createState, createStore, Store, withProps} from '@ngneat/elf';
-import {entitiesPropsFactory, withEntities} from "@ngneat/elf-entities"
+import {entitiesPropsFactory, selectAllEntities, selectEntity, withEntities} from "@ngneat/elf-entities"
+import {Injectable} from "@angular/core";
+import {localStorageStrategy, persistState} from "@ngneat/elf-persist-state";
 
-interface User {
+export interface User {
   id: number;
   name: string;
   email: string;
@@ -18,17 +20,32 @@ interface GlobalProps{
   accessToken: string;
   refreshToken: string;
 }
-const {userEntitiesRef, withUserEntities} = entitiesPropsFactory('user');
 const {addressEntitiesRef, withAddressEntities} = entitiesPropsFactory('address');
-interface User{}
 //criando o estado a ser utilizado na nossa store
 const {state, config} = createState(
-  withProps<GlobalProps>({accessToken: "", refreshToken:""}), //setando propriedades globais ao state da minha store
+  withProps<GlobalProps>({accessToken: "sdasad", refreshToken:"asdsad"}), //setando propriedades globais ao state da minha store
   withEntities<User, "id">({idKey: "id"}), //setando propriedades especificas da minha entidade usuario ao state da minha store
   withAddressEntities<Address>()
 )
 
-const userStore = new Store({name: "user", state, config})
+const userStore = new Store({name: "user", state, config}) //criando store
 
+export const persist = persistState(userStore, {
+  key: 'auth',
+  storage: localStorageStrategy,        //setando dados no estado do navegador
+});
 
-userStore.subscribe(u => (console.log(u)));
+@Injectable()
+  export class UserRepository{
+  updateUser(user:User){
+    userStore.update(state => ({
+      ...state , user           //mantem o estado atual e adiciona o user passado
+    }))
+  }
+  getUserById(id:number){
+    return userStore.pipe(selectEntity(id))
+  }
+  getAllEntities(){
+    return userStore.pipe(selectAllEntities());
+  }
+}
