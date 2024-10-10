@@ -1,4 +1,4 @@
-import {createState, createStore, withProps} from '@ngneat/elf';
+import {createState, createStore, Store, withProps} from '@ngneat/elf';
 
 interface UserProps{
   name: string;
@@ -8,3 +8,7 @@ interface UserProps{
 const {state, config} = createState(
   withProps<UserProps>({name:'',email:''})
 )
+
+const userStore = new Store({name: "user", state, config})
+
+
