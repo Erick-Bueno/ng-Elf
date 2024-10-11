@@ -12,22 +12,15 @@ import {AsyncPipe} from "@angular/common";
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  userRepository = Inject(UserRepository)
-  user$?:Observable<User>;
   title = 'elf';
+  constructor(private  readonly  userRepository: UserRepository) {
+  }
 
 
   ngOnInit(): void {
-      /*this.user$ = this.userRepository.findById(1)*/ //pegar o usuario
-    this.userRepository.getAllEntities().subscribe()
+    this.userRepository.selectEntities()
   }
   updateUser(){
-    const newUser:User = {
-        email: "erickjb93@gmail.com",
-        address: 1,
-        name: "erick",
-        id: 2
-    }
-    this.userRepository.updateUser(newUser) //atualizar usuario
+    this.userRepository.updateUser() //atualizar usuario
   }
 }

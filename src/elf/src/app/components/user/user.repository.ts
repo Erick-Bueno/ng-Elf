@@ -1,51 +1,60 @@
-import {createState, createStore, Store, withProps} from '@ngneat/elf';
-import {entitiesPropsFactory, selectAllEntities, selectEntity, withEntities} from "@ngneat/elf-entities"
+import {createStore, select, withProps} from "@ngneat/elf";
+import {selectAllEntities, setEntities, withEntities} from "@ngneat/elf-entities";
 import {Injectable} from "@angular/core";
-import {localStorageStrategy, persistState} from "@ngneat/elf-persist-state";
 
 export interface User {
-  id: number;
-  name: string;
-  email: string;
-  address: Address['id']
+  id: number,
+  email: string
 }
-interface Address {
-  id: number;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-}
-interface GlobalProps{
+interface Jwt{
   accessToken: string;
   refreshToken: string;
 }
-const {addressEntitiesRef, withAddressEntities} = entitiesPropsFactory('address');
-//criando o estado a ser utilizado na nossa store
-const {state, config} = createState(
-  withProps<GlobalProps>({accessToken: "sdasad", refreshToken:"asdsad"}), //setando propriedades globais ao state da minha store
-  withEntities<User, "id">({idKey: "id"}), //setando propriedades especificas da minha entidade usuario ao state da minha store
-  withAddressEntities<Address>()
-)
 
-const userStore = new Store({name: "user", state, config}) //criando store
-
-export const persist = persistState(userStore, {
-  key: 'auth',
-  storage: localStorageStrategy,        //setando dados no estado do navegador
-});
-
-@Injectable()
-  export class UserRepository{
-  updateUser(user:User){
-    userStore.update(state => ({
-      ...state , user           //mantem o estado atual e adiciona o user passado
-    }))
+//setando a store e inicializando os campos
+/*
+no vuex seria:
+const store = createStore({
+state: {
+    user:{
+      id:null,
+      email:""
+    }
   }
-  getUserById(id:number){
-    return userStore.pipe(selectEntity(id))
+})
+
+* */
+const store = createStore(
+  {name: "user"},
+  withProps<Jwt>({accessToken:"", refreshToken:""}), //propriedades mais simples e q são meio gerais
+  withEntities<User>({idKey: "id"}) //utilizar quando trabalhamos com uma listagem por exemplo, lista de usuarios
+);
+@Injectable({providedIn: "root"})
+export class UserRepository {
+  user$ = store.pipe(select((state) => state));
+
+  /*
+
+  equivalente a mutation do vuex
+    mutations: {
+    UPDATE_USER(state, user) {
+      state.user = user;
+    }
+
+  * */
+
+  updateUser() {
+    store.update(
+      setEntities([
+        {id:1, email:"test@test.com"},
+        {id:2, email:"test@test.com"},
+        {id:3, email:"test@test.com"},
+      ])
+    )
   }
-  getAllEntities(){
-    return userStore.pipe(selectAllEntities());
+  selectEntities(){
+    return store.pipe(selectAllEntities()).subscribe((entities) => {
+      console.log(entities);
+    });
   }
 }
